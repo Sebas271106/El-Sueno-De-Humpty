@@ -1,50 +1,86 @@
 using UnityEngine;
 
-public class CamaraTP : MonoBehaviour
+public class CameraTP : MonoBehaviour
 {
-    [Header("Objetivo")]
-    public Transform objetivo;          // Arrastra aquí tu PJ
+    [Header("Camera SetUp")]
+    public Transform player;
+    public Transform cameraTarget;
+    public Vector3 shoulderOffset = new Vector3(0.3f, 1.7f, -2f);
+    public float followSpeed = 5f;
+    public float rotationSpeed = 5f;
+    public float mouseSensitivity = 0.5f;
 
-    [Header("Posición")]
-    public float distancia  = 5f;
-    public float altura     = 2f;
-    public float suavizado  = 5f;       // Qué tan suave sigue al PJ
+    [Header("Orbita")]
+    public float minPitch = -20f;
+    public float maxPitch = 60f;
 
-    [Header("Rotación con mouse")]
-    public float sensibilidadX = 3f;
-    public float sensibilidadY = 2f;
-    public float limiteArribaAbajo = 30f; // Ángulo máximo vertical
-
-    private float anguloX = 0f;
-    private float anguloY = 0f;
+    private float yaw;
+    private float pitch;
+    private PlayerMovement playerMovement;
+    private Transform mainCamera;
 
     void Start()
     {
-        // Ocultar cursor (quita esta línea si no lo quieres)
-        Cursor.lockState = CursorLockMode.Locked;
+        if (player == null)
+        {
+            Debug.LogError("CameraTP: player Transform is not assigned.");
+            enabled = false;
+            return;
+        }
 
-        Vector3 anglesIniciales = transform.eulerAngles;
-        anguloX = anglesIniciales.y;
-        anguloY = anglesIniciales.x;
-    }
+        playerMovement = player.GetComponent<PlayerMovement>();
+        if (playerMovement == null)
+        {
+            Debug.LogWarning("CameraTP: PlayerMovement component not found on player. Camera will use mouse input for rotation.");
+        }
+
+        if (Camera.main == null)
+        {
+            Debug.LogError("CameraTP: No Camera tagged as MainCamera found in the scene.");
+            enabled = false;
+            return;
+        }
+
+        mainCamera = Camera.main.transform;
+
+        if (cameraTarget == null)
+        {
+            cameraTarget = player;
+        }
+
+        Cursor.lockState = CursorLockMode.Locked;
+    }   
 
     void LateUpdate()
     {
-        if (objetivo == null) return;
+        HandleInput();
+        UpdateCameraPosition();
+    }
 
-        // Leer movimiento del mouse
-        anguloX += Input.GetAxis("Mouse X") * sensibilidadX;
-        anguloY -= Input.GetAxis("Mouse Y") * sensibilidadY;
-        anguloY  = Mathf.Clamp(anguloY, -limiteArribaAbajo, limiteArribaAbajo);
+    void HandleInput()
+    {
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
-        // Calcular rotación y posición deseada
-        Quaternion rotacion = Quaternion.Euler(anguloY, anguloX, 0f);
-        Vector3 posicionObjetivo = objetivo.position + Vector3.up * altura;
-        Vector3 posicionDeseada  = posicionObjetivo - rotacion * Vector3.forward * distancia;
+        if (playerMovement != null && playerMovement.isMoving())
+        {
+            yaw += playerMovement.CurrentYaw;
+        }
+        else
+        {
+            yaw += mouseX * rotationSpeed;
+        }
 
-        // Mover suavemente
-        transform.position = Vector3.Lerp(transform.position, posicionDeseada,
-                                           suavizado * Time.deltaTime);
-        transform.LookAt(posicionObjetivo);
+        pitch -= mouseY;
+        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+    }
+
+    void UpdateCameraPosition()
+    {
+        Quaternion rotacion = Quaternion.Euler(pitch, yaw, 0);
+        Vector3 posicionObjetivo = player.position + rotacion * shoulderOffset;
+
+        mainCamera.position = Vector3.Lerp(mainCamera.position, posicionObjetivo, followSpeed * Time.deltaTime);
+        mainCamera.LookAt(cameraTarget);
     }
 }
