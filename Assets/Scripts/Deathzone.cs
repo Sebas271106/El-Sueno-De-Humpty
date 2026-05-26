@@ -1,16 +1,17 @@
 using UnityEngine;
 
-public class Deathzone : MonoBehaviour
+public class DeathZone : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void OnTriggerEnter(Collider other)
     {
-        
+        Debug.Log("DeathZone tocada por: " + other.gameObject.name);
+
+        if (!other.CompareTag("Player")) return;
+
+        HealthSystem hs = other.GetComponent<HealthSystem>();
+        if (hs != null)
+            hs.LoseLife();
+
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }
