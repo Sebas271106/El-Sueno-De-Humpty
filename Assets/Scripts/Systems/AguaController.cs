@@ -3,24 +3,24 @@ using UnityEngine;
 public class AguaController : MonoBehaviour
 {
     [Header("Tiempos")]
-    public float tiempoVisible = 4f;
-    public float tiempoOculto  = 1f;
+    public float tiempoVisible = 3f;
+    public float tiempoOculto = 2f;
 
     [Header("Aleatoriedad")]
     public float delayMaximo = 4f;
 
     private Material aguaMaterial;
+    private Collider propioCollider;
     private float timer;
     private bool aguaActiva = false;
     private bool delayTerminado = false;
-    private Collider aguaCollider;
 
     private static readonly int ClipHash = Shader.PropertyToID("_Clip");
 
     void Start()
     {
-        aguaMaterial  = GetComponent<Renderer>().material;
-        aguaCollider  = GetComponent<Collider>();
+        aguaMaterial = GetComponent<Renderer>().material;
+        propioCollider = GetComponent<Collider>();
 
         SetAgua(false);
         float delayInicial = Random.Range(0f, delayMaximo);
@@ -30,7 +30,7 @@ public class AguaController : MonoBehaviour
     void IniciarCiclo()
     {
         delayTerminado = true;
-        aguaActiva     = true;
+        aguaActiva = true;
         SetAgua(true);
         timer = tiempoVisible;
     }
@@ -51,15 +51,17 @@ public class AguaController : MonoBehaviour
 
     void SetAgua(bool visible)
     {
-        aguaMaterial.SetFloat(ClipHash, visible ? 1f : 0f);
+        aguaMaterial.SetFloat(ClipHash, visible ? 0f : 1f);
 
-        // El collider solo activa daño cuando el agua es visible
-        if (aguaCollider != null)
-            aguaCollider.enabled = visible;
+        if (propioCollider != null)
+        {
+            propioCollider.enabled = visible;
+        }
     }
 
     void OnTriggerEnter(Collider other)
     {
+        if (!aguaActiva) return;
         if (!other.CompareTag("Player")) return;
 
         HealthSystem health = other.GetComponent<HealthSystem>();
