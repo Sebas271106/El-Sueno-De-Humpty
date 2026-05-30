@@ -14,6 +14,5 @@ public class JumpBoostPickup : MonoBehaviour
         if (movement != null)
             movement.ApplyBoost(multiplier, duration);
 
-        Destroy(gameObject);
     }
 }
