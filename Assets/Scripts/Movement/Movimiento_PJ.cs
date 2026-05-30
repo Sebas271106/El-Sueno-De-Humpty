@@ -18,11 +18,6 @@ public class Movimiento_PJ : MonoBehaviour
     public float acceleration = 8f;
     public float deceleration = 12f;
 
-    [Header("Suelo")]
-    public Transform groundCheck;
-    public float groundDistance = 0.2f;
-    public LayerMask groundMask;
-
     [Header("Camara")]
     public Transform cameraTransform;
 
@@ -31,12 +26,12 @@ public class Movimiento_PJ : MonoBehaviour
     private Vector3 velocity;
     private Vector3 currentMoveVelocity;
     private bool isGrounded;
+    private bool wasGrounded;
     private float jumpCooldownCounter;
 
     private float boostMultiplier = 1f;
     private float boostTimer = 0f;
 
-    // Hashes para mejor rendimiento
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
     private static readonly int IsJumpingHash = Animator.StringToHash("IsJumping");
     private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
@@ -53,17 +48,16 @@ public class Movimiento_PJ : MonoBehaviour
         if (boostTimer > 0f)
         {
             boostTimer -= Time.deltaTime;
-            if (boostTimer <= 0f)
-                boostMultiplier = 1f;
+            if (boostTimer <= 0f) boostMultiplier = 1f;
         }
 
         jumpCooldownCounter -= Time.deltaTime;
 
-        isGrounded = jumpCooldownCounter <= 0f && Physics.CheckSphere(
-            groundCheck.position, groundDistance, groundMask
-        );
+        // --- Detección de suelo con CharacterController (no depende de layers) ---
+        wasGrounded = isGrounded;
+        isGrounded = jumpCooldownCounter <= 0f && controller.isGrounded;
 
-        if (isGrounded && velocity.y < 0)
+        if (isGrounded && velocity.y < 0f)
             velocity.y = -2f;
 
         // --- Input de movimiento ---
@@ -72,25 +66,19 @@ public class Movimiento_PJ : MonoBehaviour
 
         Vector3 forward = cameraTransform.forward;
         Vector3 right = cameraTransform.right;
-        forward.y = 0f;
-        right.y = 0f;
-        forward.Normalize();
-        right.Normalize();
+        forward.y = 0f; right.y = 0f;
+        forward.Normalize(); right.Normalize();
 
         Vector3 inputDirection = (forward * v + right * h).normalized;
         bool isRunning = Input.GetKey(KeyCode.LeftShift);
         float targetSpeed = inputDirection.magnitude > 0.1f
-                                ? (isRunning ? runSpeed : walkSpeed)
-                                : 0f;
+                            ? (isRunning ? runSpeed : walkSpeed) : 0f;
 
         Vector3 targetVelocity = inputDirection * targetSpeed;
-        float smoothFactor = inputDirection.magnitude > 0.1f
-                                 ? acceleration
-                                 : deceleration;
+        float smoothFactor = inputDirection.magnitude > 0.1f ? acceleration : deceleration;
 
         currentMoveVelocity = Vector3.Lerp(
-            currentMoveVelocity, targetVelocity, smoothFactor * Time.deltaTime
-        );
+            currentMoveVelocity, targetVelocity, smoothFactor * Time.deltaTime);
 
         controller.Move(currentMoveVelocity * Time.deltaTime);
 
@@ -98,35 +86,37 @@ public class Movimiento_PJ : MonoBehaviour
         {
             Quaternion targetRot = Quaternion.LookRotation(currentMoveVelocity);
             transform.rotation = Quaternion.Slerp(
-                transform.rotation, targetRot, rotationSpeed * Time.deltaTime
-            );
+                transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
         }
 
-        // --- Salto con boost ---
+        // --- Salto: solo ejecuta si controller confirma suelo ---
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded && velocity.y <= 0f)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * boostMultiplier * -2f * gravity);
             jumpCooldownCounter = jumpCooldownTime;
             animator.SetBool(IsJumpingHash, true);
-            Debug.Log("SALTANDO - IsJumping: " + animator.GetBool(IsJumpingHash));
+            Debug.Log("SALTANDO desde el suelo");
         }
 
-        if (Input.GetKeyUp(KeyCode.Space) && velocity.y > 0)
+        // --- Corte de salto al soltar espacio ---
+        if (Input.GetKeyUp(KeyCode.Space) && velocity.y > 0f)
             velocity.y *= 0.5f;
 
-        if (velocity.y < 0)
+        // --- Gravedad ---
+        if (velocity.y < 0f)
             velocity.y += gravity * fallMultiplier * Time.deltaTime;
         else
             velocity.y += gravity * Time.deltaTime;
 
         controller.Move(velocity * Time.deltaTime);
 
-        // --- Actualizar Animator ---
+        // --- Animator ---
         float speedNormalized = currentMoveVelocity.magnitude / runSpeed;
         animator.SetFloat(SpeedHash, speedNormalized, 0.1f, Time.deltaTime);
         animator.SetBool(IsGroundedHash, isGrounded);
 
-        if (isGrounded && velocity.y < -0.1f && animator.GetBool(IsJumpingHash))
+        // Apagar IsJumping al momento exacto de aterrizar
+        if (!wasGrounded && isGrounded)
             animator.SetBool(IsJumpingHash, false);
     }
 
@@ -139,14 +129,12 @@ public class Movimiento_PJ : MonoBehaviour
     void OnControllerColliderHit(ControllerColliderHit hit)
     {
         FakePlatform fake = hit.gameObject.GetComponent<FakePlatform>();
-        if (fake != null)
-            fake.TriggerDestroy();
+        if (fake != null) fake.TriggerDestroy();
     }
 
     void OnDrawGizmosSelected()
     {
-        if (groundCheck == null) return;
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(groundCheck.position, groundDistance);
+        Gizmos.DrawWireSphere(transform.position, 0.2f);
     }
 }
