@@ -95,7 +95,6 @@ public class Movimiento_PJ : MonoBehaviour
             velocity.y = Mathf.Sqrt(jumpHeight * boostMultiplier * -2f * gravity);
             jumpCooldownCounter = jumpCooldownTime;
             animator.SetBool(IsJumpingHash, true);
-            Debug.Log("SALTANDO desde el suelo");
         }
 
         // --- Corte de salto al soltar espacio ---
