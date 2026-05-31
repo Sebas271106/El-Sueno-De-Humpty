@@ -26,6 +26,7 @@ public class BubbleSpawner : MonoBehaviour
     private int        _activeBubbles;
     private float      _spawnTimer;
     private float      _spawnInterval;
+    private bool       _deactivated = false; // ← flag de control
 
     // ─────────────────────────────────────────────────────────────────────────────
     // Unity
@@ -39,6 +40,8 @@ public class BubbleSpawner : MonoBehaviour
 
     private void Update()
     {
+        if (_deactivated) return; // ← corta todo si está desactivado
+
         _spawnTimer += Time.deltaTime;
 
         if (_spawnTimer >= _spawnInterval)
@@ -57,6 +60,19 @@ public class BubbleSpawner : MonoBehaviour
         _activeBubbles = Mathf.Max(0, _activeBubbles - 1);
     }
 
+    public void Deactivate()
+    {
+        _deactivated = true;
+        _spawnTimer  = 0f;
+        Debug.Log("[BubbleSpawner] Spawner desactivado.");
+    }
+
+    public void Activate()
+    {
+        _deactivated = false;
+        Debug.Log("[BubbleSpawner] Spawner activado.");
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────
     // Privados
     // ─────────────────────────────────────────────────────────────────────────────
@@ -71,9 +87,6 @@ public class BubbleSpawner : MonoBehaviour
             GameObject bubble   = _pool.Get(spawnPos, Quaternion.identity);
 
             if (bubble == null) break;
-
-            // La escala la maneja BubbleMovement.Randomize() al activarse.
-            // No se toca transform.localScale aquí.
 
             BubbleLife life = bubble.GetComponent<BubbleLife>();
             if (life != null) life.Initialize(this, _pool);
