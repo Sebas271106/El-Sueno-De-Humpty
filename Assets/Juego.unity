@@ -1063,6 +1063,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ab0a001f00dbcd47b4f8d17acea512e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blockingDistance: 15
 --- !u!114 &116758041
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1093,7 +1094,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bathtub: {fileID: 634124434}
-  orbitSpeed: 30
+  orbitSpeed: 3
   rotationSpeed: 10
   halfWidth: 0.03
   halfLength: 0.005
@@ -1111,8 +1112,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 993466828}
-  detectionRadius: 4
-  loseTrackRadius: 6
+  detectionRadius: 2
+  loseTrackRadius: 3
 --- !u!1001 &118417529
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5127,7 +5128,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 522140295}
-  - component: {fileID: 522140296}
   m_Layer: 0
   m_Name: --- Piscina ---
   m_TagString: Untagged
@@ -5157,18 +5157,6 @@ Transform:
   - {fileID: 634124434}
   m_Father: {fileID: 1540689442}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &522140296
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 522140294}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 967d37043aa7f204ea8ca7b49bb8aa16, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &523479017
 GameObject:
   m_ObjectHideFlags: 0
