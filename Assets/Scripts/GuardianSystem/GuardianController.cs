@@ -40,8 +40,6 @@ public class GuardianController : MonoBehaviour
         bool playerDetected = _detection.IsPlayerDetected;
         float distanceToPlayer = _detection.DistanceToPlayer;
 
-        Debug.Log($"[Guardian] Detectado: {playerDetected} | Distancia: {distanceToPlayer} | Estado: {_currentState}");
-
         if (!playerDetected)
         {
             TransitionTo(GuardianState.Orbiting);

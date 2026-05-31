@@ -978,6 +978,7 @@ GameObject:
   - component: {fileID: 116758042}
   - component: {fileID: 116758041}
   - component: {fileID: 116758040}
+  - component: {fileID: 116758044}
   m_Layer: 0
   m_Name: Gato
   m_TagString: Untagged
@@ -1004,10 +1005,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1.033627
-  m_Height: 2.0672548
+  m_Radius: 1.2490191
+  m_Height: 2.4980383
   m_Direction: 1
-  m_Center: {x: 0.21345079, y: 0.04955101, z: 0.00000047683716}
+  m_Center: {x: 0.21345079, y: 0.04955101, z: -0.21539164}
 --- !u!54 &116758038
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1063,7 +1064,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ab0a001f00dbcd47b4f8d17acea512e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  blockingDistance: 15
+  blockingDistance: 10
 --- !u!114 &116758041
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1112,8 +1113,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 993466828}
-  detectionRadius: 2
-  loseTrackRadius: 3
+  detectionRadius: 15
+  loseTrackRadius: 20
+--- !u!114 &116758044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 116758036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3152f81f7e51ea045be4c8b933c70141, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damageCooldown: 1.5
+  playerTag: Player
 --- !u!1001 &118417529
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -27385,7 +27400,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c03e3309f96d4974a9826b9807dc3a8e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.019723892
+      value: -0.23
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c03e3309f96d4974a9826b9807dc3a8e, type: 3}
       propertyPath: m_LocalRotation.w
