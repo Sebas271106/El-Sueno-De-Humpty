@@ -1,81 +1,173 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Detecta colisión con el jugador (CharacterController), lo captura dentro de la burbuja
+/// y delega la secuencia de muerte al sistema de juego existente.
+/// </summary>
+[RequireComponent(typeof(BubbleMovement))]
 public class BubbleTrap : MonoBehaviour
 {
-    [Header("Captura")]
-    public Transform capturePoint;
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Inspector
+    // ─────────────────────────────────────────────────────────────────────────────
 
-    [Header("Tiempo dentro de la burbuja")]
-    public float trappedTime = 4f;
+    [Header("Detection")]
+    [Tooltip("Tag del GameObject del jugador.")]
+    [SerializeField] private string playerTag = "Player";
 
-    [Header("Lanzamiento")]
-    public float launchForce = 15f;
+    [Header("Capture Settings")]
+    [Tooltip("Tiempo en segundos que la burbuja transporta al jugador antes de ejecutar la muerte.")]
+    [SerializeField, Range(0.5f, 5f)] private float captureDelay = 1.5f;
 
-    private bool playerCaptured = false;
-    private GameObject currentPlayer;
-    private BubbleMovement bubbleMovement;
+    [Tooltip("Offset de posición del jugador dentro de la burbuja (relativo al centro de la burbuja).")]
+    [SerializeField] private Vector3 playerOffset = Vector3.zero;
 
-    void Start()
+    [Header("Death Event")]
+    [Tooltip("Nombre del método que se llamará en el jugador para ejecutar la secuencia de muerte.")]
+    [SerializeField] private string deathMethodName = "Die";
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Estado interno
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    private BubbleMovement      _movement;
+    private BubbleLife          _life;
+
+    private Transform           _capturedPlayer;
+    private CharacterController _capturedCC;        // ← referencia directa al CC
+    private Behaviour[]         _playerScripts;     // scripts de movimiento/input a deshabilitar
+    private bool                _hasPlayer;
+    private float               _captureTimer;
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Unity
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    private void Awake()
     {
-        bubbleMovement = GetComponent<BubbleMovement>();
+        _movement = GetComponent<BubbleMovement>();
+        _life     = GetComponent<BubbleLife>();
     }
 
-    void OnTriggerEnter(Collider other)
+    private void OnEnable()
     {
-        if (playerCaptured) return;
-
-        if (other.CompareTag("Player"))
-            CapturePlayer(other.gameObject);
+        _hasPlayer      = false;
+        _capturedPlayer = null;
+        _capturedCC     = null;
+        _captureTimer   = 0f;
     }
 
-    void CapturePlayer(GameObject player)
+    private void Update()
     {
-        playerCaptured = true;
-        currentPlayer = player;
+        if (!_hasPlayer) return;
 
-        // Desactivar CharacterController
-        CharacterController cc = player.GetComponent<CharacterController>();
-        if (cc != null) cc.enabled = false;
+        _captureTimer += Time.deltaTime;
 
-        // Rigidbody temporal
-        Rigidbody rb = player.GetComponent<Rigidbody>();
-        if (rb == null) rb = player.AddComponent<Rigidbody>();
-        rb.useGravity = false;
-        rb.linearVelocity = Vector3.zero;
+        // Mantener al jugador pegado a la burbuja usando CharacterController.Move
+        if (_capturedPlayer != null && _capturedCC != null)
+        {
+            Vector3 targetPos  = transform.position + playerOffset;
+            Vector3 delta      = targetPos - _capturedPlayer.position;
+            // Move respeta el CharacterController y evita atravesar geometría
+            _capturedCC.Move(delta);
+        }
 
-        // Meter jugador en la burbuja
-        player.transform.position = capturePoint.position;
-        player.transform.SetParent(transform);
-
-        // Arrancar movimiento
-        bubbleMovement.StartMoving();
-
-        StartCoroutine(ReleasePlayer());
+        if (_captureTimer >= captureDelay)
+        {
+            TriggerDeath();
+        }
     }
 
-    IEnumerator ReleasePlayer()
+    // CharacterController usa OnControllerColliderHit, pero para detectar
+    // que la BURBUJA toca al jugador necesitamos OnTriggerEnter en la burbuja.
+    // Asegúrate de que el Collider de la burbuja tenga isTrigger = true.
+    private void OnTriggerEnter(Collider other)
     {
-        yield return new WaitForSeconds(trappedTime);
+        if (_hasPlayer) return;
+        if (!other.CompareTag(playerTag)) return;
 
-        currentPlayer.transform.SetParent(null);
+        // Verificar que el jugador tiene CharacterController
+        CharacterController cc = other.GetComponent<CharacterController>();
+        if (cc == null) return;   // no es nuestro jugador con CC
 
-        // Destruir Rigidbody temporal
-        Rigidbody rb = currentPlayer.GetComponent<Rigidbody>();
-        Destroy(rb);
-
-        // Reactivar CharacterController para que el OnTriggerEnter de DeathZone funcione
-        CharacterController cc = currentPlayer.GetComponent<CharacterController>();
-        if (cc != null) cc.enabled = true;
-
-        Destroy(gameObject);
-
-        StartCoroutine(PlayerDeathRoutine());
+        CapturePlayer(other.transform, cc);
     }
-    IEnumerator PlayerDeathRoutine()
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Privados
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    private void CapturePlayer(Transform player, CharacterController cc)
     {
-        yield return new WaitForSeconds(3f);
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        _hasPlayer      = true;
+        _capturedPlayer = player;
+        _capturedCC     = cc;
+        _captureTimer   = 0f;
+
+        // Deshabilitar scripts de movimiento/input del jugador.
+        // ► Reemplaza los strings o tipos según los nombres reales de tus scripts.
+        _playerScripts = player.GetComponents<Behaviour>();
+        foreach (Behaviour b in _playerScripts)
+        {
+            if (b == null) continue;
+            string typeName = b.GetType().Name;
+            if (typeName.Contains("Controller") ||
+                typeName.Contains("Movement")   ||
+                typeName.Contains("Input")      ||
+                typeName.Contains("Motor"))
+            {
+                b.enabled = false;
+            }
+        }
+
+        // El CharacterController en sí también se puede deshabilitar para
+        // que no interfiera con el posicionamiento manual.
+        // OJO: deshabilitar CC lo quita de la simulación física completamente.
+        _capturedCC.enabled = false;
+
+        _movement.SetTrapped(true);
+        if (_life != null) _life.PauseExpiration(true);
+
+        Debug.Log($"[BubbleTrap] Jugador (CharacterController) atrapado por {gameObject.name}");
+    }
+
+    private void TriggerDeath()
+    {
+        if (_capturedPlayer == null) return;
+
+        // Re-habilitar CharacterController antes de llamar al sistema de muerte
+        if (_capturedCC != null)
+            _capturedCC.enabled = true;
+
+        // Re-habilitar scripts de movimiento
+        if (_playerScripts != null)
+        {
+            foreach (Behaviour b in _playerScripts)
+            {
+                if (b != null) b.enabled = true;
+            }
+        }
+
+        // ► INTEGRA AQUÍ TU SISTEMA DE MUERTE ◄
+        // Opción A – SendMessage:
+        if (!string.IsNullOrEmpty(deathMethodName))
+        {
+            _capturedPlayer.SendMessage(deathMethodName, SendMessageOptions.DontRequireReceiver);
+        }
+
+        // Opción B – Referencia directa (más eficiente):
+        // var health = _capturedPlayer.GetComponent<PlayerHealth>();
+        // if (health != null) health.Die();
+
+        // Opción C – Evento global:
+        // GameManager.Instance.OnPlayerDeath?.Invoke();
+
+        // Limpiar estado
+        _hasPlayer      = false;
+        _capturedPlayer = null;
+        _capturedCC     = null;
+        _movement.SetTrapped(false);
+
+        if (_life != null) _life.ForceExpire();
     }
 }

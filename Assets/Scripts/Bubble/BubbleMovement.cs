@@ -2,45 +2,71 @@ using UnityEngine;
 
 public class BubbleMovement : MonoBehaviour
 {
-    [Header("Movimiento Burbuja")]
-    public float upwardSpeed = 2f;
-    public float waveAmplitude = 2f;
-    public float waveFrequency = 2f;
+    [Header("Vertical Speed")]
+    [SerializeField, Range(0.5f, 10f)] private float minRiseSpeed = 1f;
+    [SerializeField, Range(0.5f, 10f)] private float maxRiseSpeed = 3f;
 
-    private Vector3 startPosition;
-    private float timeCounter;
-    private bool isMoving = false;
+    [Header("Oscillation")]
+    [SerializeField, Range(0f, 3f)] private float minAmplitude = 0.2f;
+    [SerializeField, Range(0f, 3f)] private float maxAmplitude = 0.8f;
+    [SerializeField, Range(0.1f, 5f)] private float minFrequency = 0.5f;
+    [SerializeField, Range(0.1f, 5f)] private float maxFrequency = 2f;
 
-    void Start()
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Estado interno
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    private float   _riseSpeed;
+    private float   _amplitude;
+    private float   _frequency;
+    private float   _phaseOffset;
+    private Vector3 _oscillationAxis;
+    private float   _elapsed;
+    private bool    _trapped;
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Unity
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    private void Awake()  => Randomize();
+    private void OnEnable() => Randomize();
+
+    private void Update()
     {
-        startPosition = transform.position;
+        if (_trapped) return;
+
+        _elapsed += Time.deltaTime;
+
+        transform.position += Vector3.up * (_riseSpeed * Time.deltaTime);
+
+        float oscillation = _amplitude * Mathf.Sin(2f * Mathf.PI * _frequency * _elapsed + _phaseOffset);
+        transform.position += _oscillationAxis * (oscillation * Time.deltaTime);
     }
 
-    void Update()
+    // ─────────────────────────────────────────────────────────────────────────────
+    // API Pública
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    public void SetTrapped(bool trapped) => _trapped = trapped;
+    public float RiseSpeed => _riseSpeed;
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Privados
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    private void Randomize()
     {
-        if (isMoving)
-            MoveBubble();
-    }
+        _elapsed  = 0f;
+        _trapped  = false;
 
-    public void StartMoving()
-    {
-        startPosition = transform.position;
-        timeCounter = 0f;
-        isMoving = true;
-    }
+        _riseSpeed   = Random.Range(minRiseSpeed, maxRiseSpeed);
+        _amplitude   = Random.Range(minAmplitude, maxAmplitude);
+        _frequency   = Random.Range(minFrequency, maxFrequency);
+        _phaseOffset = Random.Range(0f, Mathf.PI * 2f);
 
-    public void StopMoving()
-    {
-        isMoving = false;
-    }
+        float angle = Random.Range(0f, Mathf.PI * 2f);
+        _oscillationAxis = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
 
-    void MoveBubble()
-    {
-        timeCounter += Time.deltaTime;
-
-        float x = Mathf.Sin(timeCounter * waveFrequency) * waveAmplitude;
-        float y = upwardSpeed * timeCounter;
-
-        transform.position = startPosition + new Vector3(x, y, 0);
+        // ← Escala eliminada, la maneja BubblePool
     }
 }
