@@ -1,3 +1,4 @@
+// GuardianController.cs
 using UnityEngine;
 
 public enum GuardianState
@@ -13,7 +14,7 @@ public enum GuardianState
 public class GuardianController : MonoBehaviour
 {
     [Header("State Settings")]
-    [SerializeField] private float blockingDistance = 2.5f;
+    [SerializeField] private float blockingDistance = 10f;
 
     private GuardianState _currentState = GuardianState.Orbiting;
     private GuardianOrbit _orbit;
@@ -46,10 +47,8 @@ public class GuardianController : MonoBehaviour
             return;
         }
 
-        if (distanceToPlayer <= blockingDistance)
-            TransitionTo(GuardianState.Blocking);
-        else
-            TransitionTo(GuardianState.Orbiting);
+        // Bloquea en cuanto detecta al jugador, sin importar distancia
+        TransitionTo(GuardianState.Blocking);
     }
 
     private void ExecuteState()
