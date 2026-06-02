@@ -581,7 +581,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 780b11e7205f349e1be230d49c781d92, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.063998796
+      value: -0.0581
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 780b11e7205f349e1be230d49c781d92, type: 3}
       propertyPath: m_LocalPosition.y
@@ -589,7 +589,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 780b11e7205f349e1be230d49c781d92, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.035918284
+      value: 0.0359
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 780b11e7205f349e1be230d49c781d92, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1132,7 +1132,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3152f81f7e51ea045be4c8b933c70141, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damageCooldown: 1.5
   playerTag: Player
 --- !u!1001 &118417529
 PrefabInstance:
@@ -9701,7 +9700,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 39b509cbe9a934916bc7607c7aa9795e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.064398795
+      value: -0.0576
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 39b509cbe9a934916bc7607c7aa9795e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -9709,7 +9708,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 39b509cbe9a934916bc7607c7aa9795e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.03631829
+      value: 0.0363
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 39b509cbe9a934916bc7607c7aa9795e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -12132,6 +12131,7 @@ MonoBehaviour:
   acceleration: 8
   deceleration: 12
   cameraTransform: {fileID: 919427472}
+  fallDamageThreshold: 20
 --- !u!95 &993466830
 Animator:
   serializedVersion: 7
@@ -13253,7 +13253,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   multiplier: 6
-  duration: 5
+  duration: 2
 --- !u!65 &1062528268
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13560,7 +13560,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   multiplier: 6
-  duration: 5
+  duration: 2
 --- !u!65 &1069164106
 BoxCollider:
   m_ObjectHideFlags: 0

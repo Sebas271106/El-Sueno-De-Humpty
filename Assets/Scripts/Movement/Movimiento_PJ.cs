@@ -1,3 +1,4 @@
+// Movimiento_PJ.cs
 using UnityEngine;
 
 [RequireComponent(typeof(Animator))]
@@ -21,6 +22,9 @@ public class Movimiento_PJ : MonoBehaviour
     [Header("Camara")]
     public Transform cameraTransform;
 
+    [Header("Daño por caída")]
+    public float fallDamageThreshold = 20f; // velocidad mínima de caída para recibir daño
+
     private CharacterController controller;
     private Animator animator;
     private Vector3 velocity;
@@ -28,6 +32,7 @@ public class Movimiento_PJ : MonoBehaviour
     private bool isGrounded;
     private bool wasGrounded;
     private float jumpCooldownCounter;
+    private float peakFallSpeed = 0f; // velocidad máxima de caída registrada
 
     private float boostMultiplier = 1f;
     private float boostTimer = 0f;
@@ -44,7 +49,6 @@ public class Movimiento_PJ : MonoBehaviour
 
     void Update()
     {
-        // --- Boost timer ---
         if (boostTimer > 0f)
         {
             boostTimer -= Time.deltaTime;
@@ -53,14 +57,31 @@ public class Movimiento_PJ : MonoBehaviour
 
         jumpCooldownCounter -= Time.deltaTime;
 
-        // --- Detección de suelo con CharacterController (no depende de layers) ---
         wasGrounded = isGrounded;
         isGrounded = jumpCooldownCounter <= 0f && controller.isGrounded;
+
+        // Registra la velocidad máxima de caída mientras está en el aire
+        if (!isGrounded && velocity.y < 0f)
+            peakFallSpeed = Mathf.Max(peakFallSpeed, Mathf.Abs(velocity.y));
 
         if (isGrounded && velocity.y < 0f)
             velocity.y = -2f;
 
-        // --- Input de movimiento ---
+        // Detecta aterrizaje brusco
+        if (!wasGrounded && isGrounded)
+        {
+            if (peakFallSpeed >= fallDamageThreshold)
+            {
+                HealthSystem hs = GetComponent<HealthSystem>();
+                if (hs != null)
+                {
+                    Debug.Log($"[FallDamage] Caída fuerte detectada — velocidad: {peakFallSpeed:F1}");
+                    hs.LoseLife();
+                }
+            }
+            peakFallSpeed = 0f; // resetea siempre al aterrizar
+        }
+
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
 
@@ -89,19 +110,17 @@ public class Movimiento_PJ : MonoBehaviour
                 transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
         }
 
-        // --- Salto: solo ejecuta si controller confirma suelo ---
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded && velocity.y <= 0f)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * boostMultiplier * -2f * gravity);
             jumpCooldownCounter = jumpCooldownTime;
             animator.SetBool(IsJumpingHash, true);
+            peakFallSpeed = 0f; // resetea al saltar para no contar el salto como caída
         }
 
-        // --- Corte de salto al soltar espacio ---
         if (Input.GetKeyUp(KeyCode.Space) && velocity.y > 0f)
             velocity.y *= 0.5f;
 
-        // --- Gravedad ---
         if (velocity.y < 0f)
             velocity.y += gravity * fallMultiplier * Time.deltaTime;
         else
@@ -109,12 +128,10 @@ public class Movimiento_PJ : MonoBehaviour
 
         controller.Move(velocity * Time.deltaTime);
 
-        // --- Animator ---
         float speedNormalized = currentMoveVelocity.magnitude / runSpeed;
         animator.SetFloat(SpeedHash, speedNormalized, 0.1f, Time.deltaTime);
         animator.SetBool(IsGroundedHash, isGrounded);
 
-        // Apagar IsJumping al momento exacto de aterrizar
         if (!wasGrounded && isGrounded)
             animator.SetBool(IsJumpingHash, false);
     }
