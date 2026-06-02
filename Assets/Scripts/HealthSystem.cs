@@ -7,6 +7,11 @@ public class HealthSystem : MonoBehaviour
     private bool isDead = false;
     private float respawnCooldown = 0f;
 
+    // ── NUEVO ────────────────────────────────────────────────────────────────
+    private bool _invincible = false;
+    public void SetInvincible(bool value) => _invincible = value;
+    // ─────────────────────────────────────────────────────────────────────────
+
     private CheckpointSystem checkpointSystem;
     private Movimiento_PJ playerMovement;
 
@@ -19,8 +24,8 @@ public class HealthSystem : MonoBehaviour
 
     public void LoseLife()
     {
-        // Bloquea si está muerto o si el cooldown no ha pasado
         if (isDead) return;
+        if (_invincible) return;          // ── NUEVO: bloquea daño
         if (Time.time < respawnCooldown) return;
 
         respawnCooldown = Time.time + 1f;
