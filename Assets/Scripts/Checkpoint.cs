@@ -7,31 +7,59 @@ public class Checkpoint : MonoBehaviour
 
     private bool activated = false;
 
-    void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (!other.CompareTag("Player"))
+            return;
 
         CheckpointSystem cs = other.GetComponent<CheckpointSystem>();
-        if (cs != null)
-            cs.SetCheckpoint(transform.position);
 
-        // Activa el visual solo la primera vez (o tras un reset de nivel)
+        if (cs != null)
+        {
+            cs.SetCheckpoint(transform.position);
+        }
+
         if (!activated)
         {
             activated = true;
+
             if (activeVisual != null)
+            {
                 activeVisual.SetActive(true);
+            }
+
+            // Buscar UIManager automáticamente
+            UIManager ui = UIManager.Instance;
+
+            if (ui == null)
+            {
+                ui = FindFirstObjectByType<UIManager>();
+            }
+
+            if (ui != null)
+            {
+                ui.CheckpointReached();
+            }
+            else
+            {
+                Debug.LogError(
+                    "No existe ningún objeto con el script UIManager en la escena."
+                );
+            }
         }
     }
 
     public void ResetCheckpoint()
     {
         activated = false;
+
         if (activeVisual != null)
+        {
             activeVisual.SetActive(false);
+        }
     }
 
-    void OnDrawGizmos()
+    private void OnDrawGizmos()
     {
         Gizmos.color = activated ? Color.green : Color.yellow;
         Gizmos.DrawWireSphere(transform.position, 1f);
