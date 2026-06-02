@@ -11,22 +11,19 @@ public class Checkpoint : MonoBehaviour
     {
         if (!other.CompareTag("Player")) return;
 
-        // Siempre guarda la posición aunque ya estuviera activado
         CheckpointSystem cs = other.GetComponent<CheckpointSystem>();
         if (cs != null)
             cs.SetCheckpoint(transform.position);
 
-        // Solo activa el visual la primera vez
+        // Activa el visual solo la primera vez (o tras un reset de nivel)
         if (!activated)
         {
             activated = true;
             if (activeVisual != null)
                 activeVisual.SetActive(true);
-            Debug.Log($"Checkpoint activado: {gameObject.name}");
         }
     }
 
-    // Llamado desde CheckpointSystem cuando se reinicia el nivel
     public void ResetCheckpoint()
     {
         activated = false;

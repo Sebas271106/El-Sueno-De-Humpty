@@ -19,25 +19,20 @@ public class CheckpointSystem : MonoBehaviour
     public void SetCheckpoint(Vector3 position)
     {
         lastCheckpointPosition = position;
-        Debug.Log($"Checkpoint guardado en {position}");
     }
 
     public void RespawnAtLastCheckpoint()
     {
+        // Solo teleporta, NO resetea checkpoints
         Teleport(lastCheckpointPosition);
     }
 
     public void RespawnAtStart()
     {
-        // Resetea la posición
+        // Resetea la posición al inicio
         lastCheckpointPosition = startPosition != null
             ? startPosition.position
             : Vector3.zero;
-
-        // Resetea todos los checkpoints de la escena
-        Checkpoint[] allCheckpoints = FindObjectsByType<Checkpoint>(FindObjectsSortMode.None);
-        foreach (Checkpoint cp in allCheckpoints)
-            cp.ResetCheckpoint();
 
         Teleport(lastCheckpointPosition);
     }
